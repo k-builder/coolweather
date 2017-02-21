@@ -1,5 +1,6 @@
 package com.example.john.coolweather;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
@@ -21,6 +22,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.john.coolweather.gson.Forecast;
 import com.example.john.coolweather.gson.Weather;
+import com.example.john.coolweather.service.AutoUpdateService;
 import com.example.john.coolweather.util.HttpUtil;
 import com.example.john.coolweather.util.Utility;
 
@@ -34,6 +36,7 @@ import okhttp3.Response;
 
 public class WeatherActivity extends AppCompatActivity {
     public DrawerLayout drawerLayout ;
+    public String wId;
     private Button navButton ;
     public SwipeRefreshLayout swipeRefresh ;
     private ScrollView weatherLayout ;
@@ -99,10 +102,12 @@ public class WeatherActivity extends AppCompatActivity {
             //有缓存时直接解析天气数据
             Weather weather = Utility.handleWeatherResponse(weatherString) ;
             weatherId = weather.basic.weatherId ;
+            wId = weatherId ;
             showWeatherInfo(weather) ;
         }else{
             //无缓存时云服务器查询天气
             weatherId = getIntent().getStringExtra("weather_id") ;
+            wId = weatherId ;
            // String weatherId = getIntent().getStringExtra("weather_id") ;
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(weatherId) ;
@@ -110,7 +115,10 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
             @Override
             public void onRefresh(){
-                requestWeather(weatherId);
+              //  String wId = getIntent().getStringExtra("weather_id") ;
+              //  weatherLayout.setVisibility(View.INVISIBLE);
+              //  Toast.makeText(WeatherActivity.this,"刷新"+wId,Toast.LENGTH_SHORT).show();
+                requestWeather(wId);
             }
         });
     }
@@ -133,6 +141,9 @@ public class WeatherActivity extends AppCompatActivity {
                             editor.putString("weather",responseText) ;
                             editor.apply();
                             showWeatherInfo(weather) ;
+                            Intent intent = new Intent(WeatherActivity.this, AutoUpdateService.class) ;
+                            startService(intent) ;
+
                         }else{
                             Toast.makeText(WeatherActivity.this,"获取天气信息失败",Toast.LENGTH_SHORT).show();
                         }
